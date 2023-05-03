@@ -21131,7 +21131,9 @@
     roots: undefined,
     // the roots of the trees
     maximal: false,
-    // whether to shift nodes down their natural BFS depths in order to avoid upwards edges (DAGS only)
+    // whether to shift nodes down their natural BFS depths in order to avoid upwards edges (DAGS only); setting acyclic to true sets maximal to true also
+    acyclic: true,
+    // whether the tree is acyclic and thus a node could be shifted (due to the maximal option) multiple times without causing an infinite loop; setting to true sets maximal to true also; if you are uncertain whether a tree is acyclic, set to false to avoid potential infinite loops
     depthSort: undefined,
     // a sorting function to order nodes at equal depth. e.g. function(a, b){ return a.data('weight') - b.data('weight') }
     animate: false,
@@ -21177,7 +21179,7 @@
     });
     var graph = eles;
     var directed = options.directed;
-    var maximal = options.maximal || options.maximalAdjustments > 0; // maximalAdjustments for compat. w/ old code
+    var maximal = options.acyclic || options.maximal || options.maximalAdjustments > 0; // maximalAdjustments for compat. w/ old code; also, setting acyclic to true sets maximal to true
 
     var bb = makeBoundingBox(options.boundingBox ? options.boundingBox : {
       x1: 0,
@@ -21313,12 +21315,13 @@
       }
 
       if (eInfo.depth <= maxDepth) {
-        if (shifted[id]) {
+        if (!options.acyclic && shifted[id]) {
           return null;
         }
 
-        changeDepth(ele, maxDepth + 1);
-        shifted[id] = true;
+        var newDepth = maxDepth + 1;
+        changeDepth(ele, newDepth);
+        shifted[id] = newDepth;
         return true;
       }
 
@@ -33994,7 +33997,7 @@ var printLayoutInfo;
     return style;
   };
 
-  var version = "3.23.0";
+  var version = "snapshot";
 
   var cytoscape = function cytoscape(options) {
     // if no options specified, use default
